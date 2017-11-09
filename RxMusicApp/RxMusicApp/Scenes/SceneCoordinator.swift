@@ -20,7 +20,45 @@ class SceneCoordinator: SceneCoordinatorType{
         self.currentViewController = window.rootViewController!
     }
     
-    func transition(to scene: Scene, type: SceneTransitionType) -> Observable<Void> {
-        let subject = PublicS
+    static func actualViewController(for viewController: UIViewController) -> UIViewController {
+        if let navigationController = viewController as? UINavigationController {
+            return navigationController.viewControllers.first!
+        } else {
+            return viewController
+        }
+    }
+    
+    @discardableResult
+    func transition(to scene: Scene, type: SceneTransitionType) -> Completable {
+        return Completable.create(subscribe: { [weak self] completable in
+            let viewController = scene.viewController()
+            switch type{
+            case .root:
+                self?.window.rootViewController = viewController
+                self?.currentViewController = SceneCoordinator.actualViewController(for: viewController)
+                completable(.completed)
+            case .modal:
+                self?.currentViewController.present(viewController, animated: true) {
+                    completable(.completed)
+                }
+                self?.currentViewController = SceneCoordinator.actualViewController(for: viewController)
+            }
+            return Disposables.create()
+        })
+    }
+    
+    @discardableResult
+    func pop(animated: Bool) -> Completable {
+        return Completable.create(subscribe: { [weak self] completable in
+            if let presenter = self?.currentViewController.presentingViewController {
+                self?.currentViewController.dismiss(animated: animated) {
+                    self?.currentViewController = SceneCoordinator.actualViewController(for: presenter)
+                    completable(.completed)
+                }
+            }else {
+                fatalError("Not a modal! Can't navigate back from \(String(describing: self?.currentViewController))")
+            }
+            return Disposables.create()
+        })
     }
 }

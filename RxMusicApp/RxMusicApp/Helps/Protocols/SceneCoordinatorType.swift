@@ -13,15 +13,15 @@ protocol SceneCoordinatorType{
     init(window:UIWindow)
     
     @discardableResult
-    func transition(to scene:Scene, type:SceneTransitionType) -> Observable<Void>
+    func transition(to scene:Scene, type:SceneTransitionType) -> Completable
     
     @discardableResult
-    func pop(animate:Bool) -> Observable<Void>
+    func pop(animated:Bool) -> Completable
 }
 
 extension SceneCoordinatorType{
     @discardableResult
-    func pop() -> Observable<Void>{
-        return self.pop(animate: true)
+    func pop() -> Completable{
+        return self.pop(animated: true)
     }
 }
